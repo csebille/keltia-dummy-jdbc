@@ -29,7 +29,7 @@ public class Main {
             while (rs.next()) {
                 // Retrieve by column name
                 System.out.print("ID: " + rs.getInt("id"));
-                System.out.print(", Text: " + rs.getInt("text"));
+                System.out.println(", Text: " + rs.getString("text"));
             }
         } catch (SQLException e) {
             e.printStackTrace();

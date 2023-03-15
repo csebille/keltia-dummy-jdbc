@@ -6,12 +6,41 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.LinkedList;
 
 public class DummyResultSet implements ResultSet {
+
+    LinkedList<LinkedList<Object>> data;
+    int rowIndex = -1;
+
+    ResultSetMetaData metadata;
+
+    ArrayList<String> columnsNames;
+    LinkedList<Object> currentRow;
+
+    public DummyResultSet() throws SQLException{
+        metadata = new DummyResultSetMetaData();
+        this.columnsNames = new ArrayList<>(metadata.getColumnCount());
+        for (int colIndex =  0; colIndex < metadata.getColumnCount(); colIndex++) {
+            columnsNames.add(metadata.getColumnName(colIndex));
+        }
+        data = new LinkedList<>();
+        for (int i = 0; i < 4; i++ ) {
+            LinkedList<Object> row = new LinkedList<>();
+            row.add(i);
+            row.add("ligne : " + i);
+            data.add(row);
+        }
+
+}
+
     @Override
     public boolean next() throws SQLException {
-        return false;
+        rowIndex++;
+        currentRow = data.get(rowIndex);
+        return data.size() > (rowIndex + 1);
     }
 
     @Override
@@ -26,7 +55,7 @@ public class DummyResultSet implements ResultSet {
 
     @Override
     public String getString(int i) throws SQLException {
-        return null;
+        return (String)currentRow.get(i);
     }
 
     @Override
@@ -46,7 +75,7 @@ public class DummyResultSet implements ResultSet {
 
     @Override
     public int getInt(int i) throws SQLException {
-        return 0;
+        return (Integer)currentRow.get(i);
     }
 
     @Override
@@ -106,7 +135,7 @@ public class DummyResultSet implements ResultSet {
 
     @Override
     public String getString(String s) throws SQLException {
-        return null;
+        return this.getString(columnsNames.indexOf(s));
     }
 
     @Override
@@ -126,7 +155,7 @@ public class DummyResultSet implements ResultSet {
 
     @Override
     public int getInt(String s) throws SQLException {
-        return 0;
+        return this.getInt(columnsNames.indexOf(s));
     }
 
     @Override
@@ -201,7 +230,7 @@ public class DummyResultSet implements ResultSet {
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        return null;
+        return this.metadata;
     }
 
     @Override
@@ -246,17 +275,17 @@ public class DummyResultSet implements ResultSet {
 
     @Override
     public boolean isAfterLast() throws SQLException {
-        return false;
+        return rowIndex == data.size();
     }
 
     @Override
     public boolean isFirst() throws SQLException {
-        return false;
+        return rowIndex == 0    ;
     }
 
     @Override
     public boolean isLast() throws SQLException {
-        return false;
+        return rowIndex == (data.size() - 1);
     }
 
     @Override
@@ -269,23 +298,50 @@ public class DummyResultSet implements ResultSet {
 
     }
 
+    private void setCurrentRow(int rowNum) {
+        rowIndex = rowNum;
+        if (rowNum < 0) {
+            currentRow = null;
+        } else {
+            currentRow = data.get(rowNum);
+        }
+    }
+
     @Override
     public boolean first() throws SQLException {
-        return false;
+        if (data.size() == 0 ) return false;
+        setCurrentRow(0);
+
+        return true;
     }
 
     @Override
     public boolean last() throws SQLException {
-        return false;
+        if (data.size() == 0 ) return false;
+        setCurrentRow(data.size() -1);
+        return true;
     }
 
     @Override
     public int getRow() throws SQLException {
-        return 0;
+        return rowIndex + 1;
     }
 
     @Override
     public boolean absolute(int i) throws SQLException {
+        int internalRowIndex = i - 1;
+        if (internalRowIndex > 0) {
+            if (i > data.size()) return false;
+            setCurrentRow(internalRowIndex);
+        } else if (internalRowIndex == 0) {
+            setCurrentRow(internalRowIndex);
+            return false;
+        } else if (internalRowIndex < 0) {
+            if (data.size() + i < 0) return false;
+            setCurrentRow(data.size() + i);
+            return false;
+        }
+
         return false;
     }
 
@@ -595,11 +651,6 @@ public class DummyResultSet implements ResultSet {
     }
 
     @Override
-    public Array getArray(int i) throws SQLException {
-        return null;
-    }
-
-    @Override
     public Object getObject(String s, Map<String, Class<?>> map) throws SQLException {
         return null;
     }
@@ -614,8 +665,14 @@ public class DummyResultSet implements ResultSet {
         return null;
     }
 
+
     @Override
     public Clob getClob(String s) throws SQLException {
+        return null;
+    }
+
+    @Override
+    public Array getArray(int i) throws SQLException {
         return null;
     }
 
